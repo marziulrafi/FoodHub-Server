@@ -1,10 +1,11 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/app.ts",
+    "dev": "nodemon --exec \"ts-node --transpile-only src/app.ts\"",
     "build": "tsc",
     "start": "node dist/app.js",
     "prisma:generate": "prisma generate",
@@ -17,14 +18,17 @@
   "packageManager": "pnpm@10.26.2",
   "dependencies": {
     "@prisma/client": "^7.3.0",
+    "@types/node": "^25.1.0",
     "better-auth": "^1.4.18",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "prisma": "^7.3.0",
+    "save-dev": "0.0.1-security",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",

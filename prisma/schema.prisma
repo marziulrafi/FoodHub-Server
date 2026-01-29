@@ -14,11 +14,86 @@ model User {
   role      Role
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  profileId Int?
+  profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId Int?     @unique
+  orders    Order[]
+  reviews   Review[]
 }
 
 enum Role {
   CUSTOMER
   PROVIDER
   ADMIN
+}
+
+model Profile {
+  id       Int       @id @default(autoincrement())
+  name     String
+  address  String?
+  user     User?     @relation
+  provider Provider?
+}
+
+model Provider {
+  id        Int      @id @default(autoincrement())
+  menuItems Meal[]
+  profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId Int?     @unique
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  meals Meal[]
+}
+
+model Meal {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
+  providerId  Int
+  categoryId  Int
+  provider    Provider    @relation(fields: [providerId], references: [id])
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orders      OrderItem[]
+  reviews     Review[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  customerId Int
+  status     OrderStatus
+  total      Float
+  address    String
+  createdAt  DateTime    @default(now())
+  customer   User        @relation(fields: [customerId], references: [id])
+  items      OrderItem[]
+}
+
+enum OrderStatus {
+  PLACED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id       Int   @id @default(autoincrement())
+  orderId  Int
+  mealId   Int
+  quantity Int
+  order    Order @relation(fields: [orderId], references: [id])
+  meal     Meal  @relation(fields: [mealId], references: [id])
+}
+
+model Review {
+  id      Int     @id @default(autoincrement())
+  userId  Int
+  mealId  Int
+  rating  Int
+  comment String?
+  user    User    @relation(fields: [userId], references: [id])
+  meal    Meal    @relation(fields: [mealId], references: [id])
 }
