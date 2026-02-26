@@ -7,6 +7,9 @@ import authRoutes from "./modules/auth/auth.routes";
 import mealRoutes from "./modules/meals/meals.routes";
 import orderRoutes from "./modules/orders/orders.routes";
 import providerRoutes from "./modules/providers/providers.routes";
+import categoryRoutes from "./modules/categories/categories.routes";
+import adminRoutes from "./modules/admin/admin.routes";
+
 
 import { globalErrorHandler } from "./middleware/error.middleware";
 
@@ -27,6 +30,8 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/meals", mealRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/providers", providerRoutes);
+app.use("/api/v1/categories", categoryRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 app.get("/", (_req, res) => {
   res.send("Welcome to FoodHub");
