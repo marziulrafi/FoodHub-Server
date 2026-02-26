@@ -6,18 +6,212 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  role      Role
+
+model user {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  role    Role       @default(CUSTOMER)
+  status  UserStatus @default(ACTIVE)
+  phone   String?
+  address String?
+
+  sessions        session[]
+  accounts        account[]
+  providerProfile ProviderProfile?
+  orders          Order[]
+  reviews         Review[]
+
+  @@map("users")
+}
+
+model session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  profile   Profile? @relation(fields: [profileId], references: [id])
-  profileId Int?     @unique
-  orders    Order[]
-  reviews   Review[]
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
+
+model account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("accounts")
+}
+
+model verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verifications")
+}
+
+model ProviderProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  restaurantName String
+  description    String?
+  logo           String?
+  banner         String?
+  cuisineTypes   String[]
+  address        String
+  city           String
+  phone          String
+  isVerified     Boolean  @default(false)
+  rating         Float    @default(0)
+  totalOrders    Int      @default(0)
+
+  meals Meal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("provider_profiles")
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  image       String?
+  isActive    Boolean @default(true)
+
+  meals Meal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Meal {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  price       Float
+  image       String?
+  images      String[]
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  isAvailable  Boolean    @default(true)
+  isVegetarian Boolean    @default(false)
+  isVegan      Boolean    @default(false)
+  isGlutenFree Boolean    @default(false)
+  spiceLevel   SpiceLevel @default(MILD)
+
+  prepTime Int  @default(20)
+  calories Int?
+
+  rating       Float @default(0)
+  totalReviews Int   @default(0)
+
+  orderItems OrderItem[]
+  reviews    Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("meals")
+}
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique @default(cuid())
+
+  customerId String
+  customer   user   @relation(fields: [customerId], references: [id])
+
+  items OrderItem[]
+
+  status      OrderStatus @default(PLACED)
+  totalAmount Float
+
+  deliveryAddress String
+  deliveryCity    String
+  deliveryPhone   String
+  note            String?
+
+  placedAt    DateTime  @default(now())
+  preparingAt DateTime?
+  readyAt     DateTime?
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  mealId String
+  meal   Meal   @relation(fields: [mealId], references: [id])
+
+  quantity Int
+  price    Float 
+  name     String
+
+  @@map("order_items")
+}
+
+model Review {
+  id         String @id @default(cuid())
+  customerId String
+  customer   user   @relation(fields: [customerId], references: [id])
+
+  mealId String
+  meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  rating  Int // 1-5
+  comment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([customerId, mealId])
+  @@map("reviews")
+}
+
 
 enum Role {
   CUSTOMER
@@ -25,49 +219,9 @@ enum Role {
   ADMIN
 }
 
-model Profile {
-  id       Int       @id @default(autoincrement())
-  name     String
-  address  String?
-  user     User?     @relation
-  provider Provider?
-}
-
-model Provider {
-  id        Int      @id @default(autoincrement())
-  menuItems Meal[]
-  profile   Profile? @relation(fields: [profileId], references: [id])
-  profileId Int?     @unique
-}
-
-model Category {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  meals Meal[]
-}
-
-model Meal {
-  id          Int         @id @default(autoincrement())
-  name        String
-  description String
-  price       Float
-  providerId  Int
-  categoryId  Int
-  provider    Provider    @relation(fields: [providerId], references: [id])
-  category    Category    @relation(fields: [categoryId], references: [id])
-  orders      OrderItem[]
-  reviews     Review[]
-}
-
-model Order {
-  id         Int         @id @default(autoincrement())
-  customerId Int
-  status     OrderStatus
-  total      Float
-  address    String
-  createdAt  DateTime    @default(now())
-  customer   User        @relation(fields: [customerId], references: [id])
-  items      OrderItem[]
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
 }
 
 enum OrderStatus {
@@ -78,21 +232,9 @@ enum OrderStatus {
   CANCELLED
 }
 
-model OrderItem {
-  id       Int   @id @default(autoincrement())
-  orderId  Int
-  mealId   Int
-  quantity Int
-  order    Order @relation(fields: [orderId], references: [id])
-  meal     Meal  @relation(fields: [mealId], references: [id])
-}
-
-model Review {
-  id      Int     @id @default(autoincrement())
-  userId  Int
-  mealId  Int
-  rating  Int
-  comment String?
-  user    User    @relation(fields: [userId], references: [id])
-  meal    Meal    @relation(fields: [mealId], references: [id])
+enum SpiceLevel {
+  MILD
+  MEDIUM
+  HOT
+  EXTRA_HOT
 }

@@ -1,20 +1,34 @@
-import express, { type Application, type Request, type Response } from 'express';
-import cors from 'cors';
+import express, { Application } from "express";
+import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./config/auth";
+
+import authRoutes from "./modules/auth/auth.routes";
+import mealRoutes from "./modules/meals/meals.routes";
+
+import { globalErrorHandler } from "./middleware/error.middleware";
 
 const app: Application = express();
 
-const PORT = process.env.PORT || 5000;
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+  })
+);
 
-app.use(cors());
 app.use(express.json());
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('FoodHub API is running! 🍱');
-});
+app.all("/api/auth/*splat", toNodeHandler(auth));
 
 
-app.listen(PORT, () => {
-  console.log(`Server is running on ${PORT}`);
+app.use("/auth", authRoutes);
+app.use("/meals", mealRoutes);
+
+app.get("/", (_req, res) => {
+  res.send("Welcome to FoodHub");
 });
+
+app.use(globalErrorHandler);
 
 export default app;
