@@ -24,33 +24,28 @@ export class AuthService {
   async register(input: RegisterInput) {
     const { name, email, password, role, restaurantName, restaurantAddress, restaurantCity, restaurantPhone } = input;
 
-    // Check duplicate email
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw { statusCode: 409, message: "Email already registered." };
     }
 
-    // Provider must supply restaurant details
     if (role === "PROVIDER") {
       if (!restaurantName || !restaurantAddress || !restaurantCity || !restaurantPhone) {
         throw { statusCode: 422, message: "Provider registration requires: restaurantName, restaurantAddress, restaurantCity, restaurantPhone." };
       }
     }
 
-    // Create user via Better Auth
     const authResult = await auth.api.signUpEmail({ body: { name, email, password } });
     if (!authResult?.user) {
       throw { statusCode: 500, message: "Registration failed. Please try again." };
     }
 
-    // Persist role
     const user = await prisma.user.update({
       where: { id: authResult.user.id },
       data: { role, emailVerified: true },
       select: { id: true, name: true, email: true, role: true, status: true },
     });
 
-    // Create provider profile if needed
     if (role === "PROVIDER") {
       await prisma.providerProfile.create({
         data: {
@@ -71,7 +66,6 @@ export class AuthService {
       throw { statusCode: 422, message: "Email and password are required." };
     }
 
-    // Authenticate with Better Auth
     const result = await auth.api.signInEmail({
       body: { email, password },
       asResponse: true,
@@ -85,7 +79,6 @@ export class AuthService {
     const body = await result.json();
     const setCookie = result.headers.get("set-cookie");
 
-    // Fetch full user with role info
     const user = await prisma.user.findUnique({
       where: { email },
       select: {
