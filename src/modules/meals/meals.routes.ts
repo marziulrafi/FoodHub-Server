@@ -22,18 +22,15 @@ const mealSchema = z.object({
   calories: z.number().int().positive().optional(),
 });
 
-// Public routes
 router.get("/", (req, res) => mealController.getAll(req, res));
 router.get("/featured", (req, res) => mealController.getFeatured(req, res));
 
-// Provider routes (must come before /:id to avoid conflict)
 router.get("/provider/mine", requireAuth, requireProvider, (req, res) => mealController.getProviderMeals(req as any, res));
 router.post("/provider", requireAuth, requireProvider, validate(mealSchema), (req, res) => mealController.create(req as any, res));
 router.put("/provider/:id", requireAuth, requireProvider, validate(mealSchema.partial()), (req, res) => mealController.update(req as any, res));
 router.patch("/provider/:id/toggle", requireAuth, requireProvider, (req, res) => mealController.toggleAvailability(req as any, res));
 router.delete("/provider/:id", requireAuth, requireProvider, (req, res) => mealController.delete(req as any, res));
 
-// Public single meal (last to avoid route conflicts)
 router.get("/:id", (req, res) => mealController.getById(req, res));
 
 export default router;
