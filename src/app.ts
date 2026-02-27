@@ -9,9 +9,9 @@ import orderRoutes from "./modules/orders/orders.routes";
 import providerRoutes from "./modules/providers/providers.routes";
 import categoryRoutes from "./modules/categories/categories.routes";
 import adminRoutes from "./modules/admin/admin.routes";
+import reviewRoutes from "./modules/reviews/reviews.routes";
 
-
-import { globalErrorHandler } from "./middleware/error.middleware";
+import { notFoundHandler, globalErrorHandler } from "./middleware/error.middleware";
 
 const app: Application = express();
 
@@ -32,11 +32,14 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/providers", providerRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
+
 
 app.get("/", (_req, res) => {
   res.send("Welcome to FoodHub");
 });
 
+app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
 export default app;
