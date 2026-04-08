@@ -1,9 +1,7 @@
-// prisma.config.ts
 import { defineConfig } from "prisma/config";
 import * as dotenv from "dotenv";
 import path from "path";
 
-// Load env manually
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 if (!process.env.DATABASE_URL) {

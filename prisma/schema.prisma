@@ -17,8 +17,9 @@ model ProviderProfile {
   banner         String?
   cuisineTypes   String[]
   address        String
-  city           String
+  city           String?
   phone          String
+  status         ProviderStatus @default(PENDING)
   isVerified     Boolean  @default(false)
   rating         Float    @default(0)
   totalOrders    Int      @default(0)
@@ -49,7 +50,7 @@ model Category {
 
 model Meal {
   id          String   @id @default(cuid())
-  name        String
+  title       String   @map("name")
   description String
   price       Float
   image       String?
@@ -94,7 +95,7 @@ model Order {
   status      OrderStatus @default(PLACED)
   totalAmount Float
 
-  deliveryAddress String
+  address        String @map("deliveryAddress")
   deliveryCity    String
   deliveryPhone   String
   note            String?
@@ -128,19 +129,19 @@ model OrderItem {
 
 model Review {
   id         String @id @default(cuid())
-  customerId String
-  customer   User   @relation(fields: [customerId], references: [id])
+  userId     String @map("customerId")
+  customer   User   @relation(fields: [userId], references: [id])
 
   mealId String
   meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
 
-  rating  Int // 1-5
+  rating  Int
   comment String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([customerId, mealId])
+  @@unique([userId, mealId])
   @@map("reviews")
 }
 
@@ -170,12 +171,23 @@ enum SpiceLevel {
   EXTRA_HOT
 }
 
+enum ProviderStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id              String           @id
   name            String
   email           String
+  password        String           @default("")
   emailVerified   Boolean          @default(false)
   image           String?
+  role            Role             @default(CUSTOMER)
+  status          UserStatus       @default(ACTIVE)
+  phone           String?
+  address         String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   sessions        Session[]

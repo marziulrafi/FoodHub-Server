@@ -8,13 +8,27 @@ export const auth = betterAuth({
   }),
 
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
-  secret:
-    process.env.BETTER_AUTH_SECRET ||
-    "fallback-secret-change-in-production",
+  secret: process.env.BETTER_AUTH_SECRET || "fallback-secret-change-in-production",
 
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
+  },
+
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        required: false,
+        defaultValue: "CUSTOMER",
+        input: true,
+      },
+      phone: {
+        type: "string",
+        required: false,
+        input: true,
+      },
+    },
   },
 
   session: {
@@ -27,34 +41,25 @@ export const auth = betterAuth({
   },
 
   trustedOrigins: [
-    process.env.FRONTEND_URL || "http://localhost:5173",
+    process.env.FRONTEND_URL || "http://localhost:3000",
+    "http://localhost:3000",
+    "http://localhost:5173",
   ],
-
-  advanced: {
-    generateId: () => {
-      const { v4: uuidv4 } = require("uuid");
-      return uuidv4();
-    },
-  },
-
-  hooks: {
-    session: {
-      create: async ({ session, user }) => {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { role: true },
-        });
-
-        return {
-          ...session,
-          user: {
-            ...session.user,
-            role: dbUser?.role || "CUSTOMER",
-          },
-        };
-      },
-    },
-  },
 });
+
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.BETTER_AUTH_SECRET) {
+    throw new Error("Missing BETTER_AUTH_SECRET in production environment.");
+  }
+  if (!process.env.BETTER_AUTH_URL) {
+    throw new Error("Missing BETTER_AUTH_URL in production environment.");
+  }
+  if (!process.env.FRONTEND_URL) {
+    throw new Error("Missing FRONTEND_URL in production environment.");
+  }
+  if (!process.env.DATABASE_URL) {
+    throw new Error("Missing DATABASE_URL in production environment.");
+  }
+}
 
 export type Auth = typeof auth;

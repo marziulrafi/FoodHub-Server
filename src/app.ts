@@ -11,7 +11,7 @@ import categoryRoutes from "./modules/categories/categories.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import reviewRoutes from "./modules/reviews/reviews.routes";
 
-import { notFoundHandler, globalErrorHandler } from "./middleware/error.middleware";
+import { globalErrorHandler } from "./middleware/error.middleware";
 
 const app: Application = express();
 
@@ -39,7 +39,6 @@ app.get("/", (_req, res) => {
   res.send("Welcome to FoodHub");
 });
 
-app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
 export default app;

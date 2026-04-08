@@ -1,0 +1,40 @@
+import "dotenv/config";
+import bcrypt from "bcryptjs";
+import { Role, UserStatus } from "@prisma/client";
+import prisma from "../config/prisma";
+import { authService } from "../modules/auth/auth.service";
+
+async function main() {
+    const email = "admin@foodhub.com";
+    const password = "admin123";
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+        console.log("Admin account already exists. Skipping seed.");
+        return;
+    }
+
+    await authService.register({
+        name: "Admin",
+        email,
+        password,
+        role: Role.ADMIN,
+    });
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.user.update({
+        where: { email },
+        data: { password: passwordHash, status: UserStatus.ACTIVE, role: Role.ADMIN },
+    });
+
+    console.log("Seed completed: admin user created.");
+}
+
+main()
+    .catch((err) => {
+        console.error("Seed failed:", err);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });
