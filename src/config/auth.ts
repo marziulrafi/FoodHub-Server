@@ -2,6 +2,16 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma";
 
+const normalizeOrigin = (url?: string) => url?.replace(/\/+$/, "") || "";
+const frontendUrl = normalizeOrigin(process.env.FRONTEND_URL) || "http://localhost:3000";
+const defaultFrontendUrls = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://foodhub-server-seven.vercel.app",
+  "https://foodhub-seven-navy.vercel.app",
+].map(normalizeOrigin);
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -40,11 +50,15 @@ export const auth = betterAuth({
     },
   },
 
-  trustedOrigins: [
-    process.env.FRONTEND_URL || "http://localhost:3000",
-    "http://localhost:3000",
-    "http://localhost:5173",
-  ],
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === "production",
+  },
+  defaultCookieAttributes: {
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: process.env.NODE_ENV === "production",
+  },
+
+  trustedOrigins: Array.from(new Set([frontendUrl, ...defaultFrontendUrls])),
 });
 
 if (process.env.NODE_ENV === "production") {

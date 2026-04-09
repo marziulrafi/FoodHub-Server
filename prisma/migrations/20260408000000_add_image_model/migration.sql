@@ -3,7 +3,7 @@
 -- Generated at: 2026-04-08
 
 -- CreateTable
-CREATE TABLE "images" (
+CREATE TABLE IF NOT EXISTS "images" (
   "id" TEXT NOT NULL,
   "url" TEXT NOT NULL,
   "publicId" TEXT NOT NULL,

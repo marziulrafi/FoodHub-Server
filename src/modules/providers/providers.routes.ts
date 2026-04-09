@@ -6,11 +6,21 @@ import { validate } from "../../middleware/validate.middleware";
 
 const router = Router() as any;
 
+const optionalUrl = z.preprocess(
+  (value) => {
+    if (typeof value === "string" && value.trim() === "") {
+      return undefined;
+    }
+    return value;
+  },
+  z.string().url("Must be a valid URL").optional()
+);
+
 const updateProviderSchema = z.object({
   restaurantName: z.string().min(2).optional(),
   description: z.string().optional(),
-  logo: z.string().url("Must be a valid URL").optional(),
-  banner: z.string().url("Must be a valid URL").optional(),
+  logo: optionalUrl,
+  banner: optionalUrl,
   cuisineTypes: z.array(z.string()).optional(),
   address: z.string().optional(),
   city: z.string().optional(),

@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-   "outDir": "./dist",
+    "outDir": "./dist",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "ES2023",
     "types": [],
-   "sourceMap": true,
+    "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
     "noUncheckedIndexedAccess": true,

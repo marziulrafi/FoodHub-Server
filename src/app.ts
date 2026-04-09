@@ -18,16 +18,22 @@ import { globalErrorHandler, notFoundHandler } from "./middleware/error.middlewa
 
 const app: Application = express();
 
+const normalizeOrigin = (origin?: string) => origin?.replace(/\/$/, "") || "";
 const allowedOrigins = [
-  process.env.FRONTEND_URL || "http://localhost:5173",
-];
+  normalizeOrigin(process.env.FRONTEND_URL),
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://foodhub-server-seven.vercel.app",
+  "https://foodhub-seven-navy.vercel.app",
+].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error("Not allowed by CORS"));
+      if (allowedOrigins.includes(normalizeOrigin(origin))) return callback(null, true);
+      callback(new Error(`Not allowed by CORS: ${origin}`));
     },
     credentials: true,
   })

@@ -1,7 +1,6 @@
 import { auth } from "../../config/auth";
 import prisma from "../../config/prisma";
 import { Role } from "@prisma/client";
-import bcrypt from "bcryptjs";
 
 interface RegisterInput {
     name: string;
@@ -69,14 +68,11 @@ export class AuthService {
             throw { statusCode: 500, message: "Registration failed. Please try again." };
         }
 
-        const passwordHash = await bcrypt.hash(password, 10);
-
         const user = await prisma.user.update({
             where: { id: authResult.user.id },
             data: {
                 role: role ?? "CUSTOMER",
                 emailVerified: true,
-                password: passwordHash,
             },
             select: {
                 id: true,

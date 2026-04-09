@@ -72,7 +72,19 @@ export class ProviderService {
       throw { statusCode: 403, message: "This provider is currently unavailable." };
     }
 
-    return provider;
+    const reviewAggregate = await prisma.review.aggregate({
+      where: { meal: { providerId: provider.id } },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    return {
+      ...provider,
+      rating: reviewAggregate._avg.rating
+        ? Math.round(reviewAggregate._avg.rating * 10) / 10
+        : provider.rating,
+      totalReviews: reviewAggregate._count.rating,
+    };
   }
 
   async updateProfile(userId: string, data: ProviderProfileUpdate) {

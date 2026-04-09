@@ -6,6 +6,16 @@ import { validate } from "../../middleware/validate.middleware";
 
 const router = Router() as any;
 
+const optionalUrl = z.preprocess(
+  (value) => {
+    if (typeof value === "string" && value.trim() === "") {
+      return undefined;
+    }
+    return value;
+  },
+  z.string().url("Must be a valid URL").optional()
+);
+
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email"),
@@ -19,7 +29,7 @@ const registerSchema = z.object({
   city: z.string().optional(),
   restaurantCity: z.string().optional(),
   description: z.string().optional(),
-  logo: z.string().url("Must be a valid URL").optional(),
+  logo: optionalUrl,
 });
 
 const loginSchema = z.object({

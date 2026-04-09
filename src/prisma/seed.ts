@@ -1,5 +1,4 @@
 import "dotenv/config";
-import bcrypt from "bcryptjs";
 import { Role, UserStatus } from "@prisma/client";
 import prisma from "../config/prisma";
 import { authService } from "../modules/auth/auth.service";
@@ -20,10 +19,9 @@ async function main() {
     role: Role.ADMIN,
   });
 
-  const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.update({
     where: { email },
-    data: { password: passwordHash, status: UserStatus.ACTIVE, role: Role.ADMIN },
+    data: { status: UserStatus.ACTIVE, role: Role.ADMIN },
   });
 
   console.log("Seed completed: admin user created.");

@@ -122,6 +122,9 @@ export class ReviewService {
   }
 
   private async _recalculateMealRating(mealId: string) {
+    const meal = await prisma.meal.findUnique({ where: { id: mealId }, select: { providerId: true } });
+    if (!meal) return;
+
     const { _avg, _count } = await prisma.review.aggregate({
       where: { mealId },
       _avg: { rating: true },
@@ -133,6 +136,22 @@ export class ReviewService {
       data: {
         rating: _avg.rating ? Math.round(_avg.rating * 10) / 10 : 0,
         totalReviews: _count.rating,
+      },
+    });
+
+    await this._recalculateProviderRating(meal.providerId);
+  }
+
+  private async _recalculateProviderRating(providerId: string) {
+    const { _avg } = await prisma.review.aggregate({
+      where: { meal: { providerId } },
+      _avg: { rating: true },
+    });
+
+    await prisma.providerProfile.update({
+      where: { id: providerId },
+      data: {
+        rating: _avg.rating ? Math.round(_avg.rating * 10) / 10 : 0,
       },
     });
   }
