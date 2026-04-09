@@ -18,7 +18,8 @@ export class CategoryController {
 
   async getById(req: Request, res: Response): Promise<void> {
     try {
-      const category = await categoryService.getById(req.params.id);
+      const id = req.params.id as string;
+      const category = await categoryService.getById(id);
       sendSuccess(res, "Category fetched successfully.", category);
     } catch (err: any) {
       sendError(res, err.message || "Failed to fetch category.", err.statusCode || 500);
@@ -36,7 +37,8 @@ export class CategoryController {
 
   async update(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const category = await categoryService.update(req.params.id, req.body);
+      const id = req.params.id as string;
+      const category = await categoryService.update(id, req.body);
       sendSuccess(res, "Category updated successfully.", category);
     } catch (err: any) {
       sendError(res, err.message || "Failed to update category.", err.statusCode || 500);
@@ -45,7 +47,8 @@ export class CategoryController {
 
   async toggleActive(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const category = await categoryService.toggleActive(req.params.id);
+      const id = req.params.id as string;
+      const category = await categoryService.toggleActive(id);
       sendSuccess(res, `Category ${category.isActive ? "activated" : "deactivated"} successfully.`, category);
     } catch (err: any) {
       sendError(res, err.message || "Failed to toggle category.", err.statusCode || 500);
@@ -54,7 +57,8 @@ export class CategoryController {
 
   async delete(req: AuthRequest, res: Response): Promise<void> {
     try {
-      await categoryService.delete(req.params.id);
+      const id = req.params.id as string;
+      await categoryService.delete(id);
       sendSuccess(res, "Category deleted successfully.");
     } catch (err: any) {
       sendError(res, err.message || "Failed to delete category.", err.statusCode || 500);

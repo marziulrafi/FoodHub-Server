@@ -2,6 +2,7 @@ import prisma from "../../config/prisma";
 import { getPaginationParams } from "../../utils/response";
 
 interface CreateReviewInput {
+  orderId: string;
   mealId: string;
   rating: number;
   comment?: string;
@@ -39,34 +40,53 @@ export class ReviewService {
     };
   }
 
-  async create(customerId: string, input: CreateReviewInput) {
-    const { mealId, rating, comment } = input;
+  async create(userId: string, input: CreateReviewInput) {
+    const { orderId, mealId, rating, comment } = input;
 
     const meal = await prisma.meal.findUnique({ where: { id: mealId } });
     if (!meal) throw { statusCode: 404, message: "Meal not found." };
 
-    const hasDeliveredOrder = await prisma.order.findFirst({
-      where: {
-        customerId,
-        status: "DELIVERED",
-        items: { some: { mealId } },
-      },
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
     });
+    if (!order || order.customerId !== userId) {
+      throw { statusCode: 404, message: "Order not found." };
+    }
 
-    if (!hasDeliveredOrder) {
+    if (order.status !== "DELIVERED") {
       throw {
         statusCode: 400,
         message: "You can only review meals from orders that have been delivered.",
       };
     }
 
+    const itemInOrder = order.items.some((item) => item.mealId === mealId);
+    if (!itemInOrder) {
+      throw {
+        statusCode: 400,
+        message: "This meal is not part of the selected order.",
+      };
+    }
+
     const existing = await prisma.review.findUnique({
-      where: { customerId_mealId: { customerId, mealId } },
+      where: { orderId_mealId: { orderId, mealId } },
     });
-    if (existing) throw { statusCode: 409, message: "You have already reviewed this meal." };
+    if (existing) {
+      throw {
+        statusCode: 409,
+        message: "You have already reviewed this meal for this order.",
+      };
+    }
 
     const review = await prisma.review.create({
-      data: { customerId, mealId, rating, comment },
+      data: {
+        userId,
+        mealId,
+        orderId,
+        rating,
+        comment: comment ?? null,
+      },
       include: { customer: { select: { name: true, image: true } } },
     });
 
@@ -74,10 +94,10 @@ export class ReviewService {
     return review;
   }
 
-  async update(customerId: string, reviewId: string, data: { rating?: number; comment?: string }) {
+  async update(userId: string, reviewId: string, data: { rating?: number; comment?: string }) {
     const review = await prisma.review.findUnique({ where: { id: reviewId } });
     if (!review) throw { statusCode: 404, message: "Review not found." };
-    if (review.customerId !== customerId) throw { statusCode: 403, message: "You cannot edit someone else's review." };
+    if (review.userId !== userId) throw { statusCode: 403, message: "You cannot edit someone else's review." };
 
     const updated = await prisma.review.update({
       where: { id: reviewId },
@@ -93,7 +113,7 @@ export class ReviewService {
     const review = await prisma.review.findUnique({ where: { id: reviewId } });
     if (!review) throw { statusCode: 404, message: "Review not found." };
 
-    if (review.customerId !== requesterId && requesterRole !== "ADMIN") {
+    if (review.userId !== requesterId && requesterRole !== "ADMIN") {
       throw { statusCode: 403, message: "You cannot delete someone else's review." };
     }
 

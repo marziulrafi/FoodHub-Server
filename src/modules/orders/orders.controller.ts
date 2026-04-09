@@ -29,7 +29,8 @@ export class OrderController {
 
   async getById(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const order = await orderService.getOrderById(req.params.id, req.user!.id, req.user!.role);
+      const id = req.params.id as string;
+      const order = await orderService.getOrderById(id, req.user!.id, req.user!.role);
       sendSuccess(res, "Order fetched successfully.", order);
     } catch (err: any) {
       sendError(res, err.message || "Failed to fetch order.", err.statusCode || 500);
@@ -38,7 +39,8 @@ export class OrderController {
 
   async cancel(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const order = await orderService.cancelOrder(req.params.id, req.user!.id);
+      const id = req.params.id as string;
+      const order = await orderService.cancelOrder(id, req.user!.id);
       sendSuccess(res, "Order cancelled successfully.", order);
     } catch (err: any) {
       sendError(res, err.message || "Failed to cancel order.", err.statusCode || 500);

@@ -7,7 +7,8 @@ export class ReviewController {
   async getByMeal(req: Request, res: Response): Promise<void> {
     try {
       const { page, limit } = req.query as Record<string, string>;
-      const data = await reviewService.getByMeal(req.params.mealId, page, limit);
+      const mealId = req.params.mealId as string;
+      const data = await reviewService.getByMeal(mealId, page, limit);
       sendSuccess(res, "Reviews fetched successfully.", data.reviews, 200, {
         total: data.total,
         page: data.page,
@@ -34,7 +35,8 @@ export class ReviewController {
 
   async update(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const review = await reviewService.update(req.user!.id, req.params.id, req.body);
+      const reviewId = req.params.id as string;
+      const review = await reviewService.update(req.user!.id, reviewId, req.body);
       sendSuccess(res, "Review updated successfully.", review);
     } catch (err: any) {
       sendError(res, err.message || "Failed to update review.", err.statusCode || 500);
@@ -43,7 +45,8 @@ export class ReviewController {
 
   async delete(req: AuthRequest, res: Response): Promise<void> {
     try {
-      await reviewService.delete(req.user!.id, req.user!.role, req.params.id);
+      const reviewId = req.params.id as string;
+      await reviewService.delete(req.user!.id, req.user!.role, reviewId);
       sendSuccess(res, "Review deleted successfully.");
     } catch (err: any) {
       sendError(res, err.message || "Failed to delete review.", err.statusCode || 500);

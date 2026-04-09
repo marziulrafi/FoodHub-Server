@@ -8,15 +8,13 @@ interface OrderItem {
 
 interface CreateOrderInput {
   items: OrderItem[];
-  deliveryAddress: string;
-  deliveryCity: string;
-  deliveryPhone: string;
+  address: string;
   note?: string;
 }
 
 export class OrderService {
   async create(customerId: string, input: CreateOrderInput) {
-    const { items, deliveryAddress, deliveryCity, deliveryPhone, note } = input;
+    const { items, address, note } = input;
 
     const mealIds = items.map((i) => i.mealId);
     const meals = await prisma.meal.findMany({ where: { id: { in: mealIds } } });
@@ -31,7 +29,7 @@ export class OrderService {
     if (unavailable.length > 0) {
       throw {
         statusCode: 400,
-        message: `These meals are currently unavailable: ${unavailable.map((m) => m.name).join(", ")}`,
+        message: `These meals are currently unavailable: ${unavailable.map((m) => m.title).join(", ")}`,
       };
     }
 
@@ -41,7 +39,7 @@ export class OrderService {
         mealId: meal.id,
         quantity: item.quantity,
         price: meal.price,
-        name: meal.name,
+        name: meal.title,
       };
     });
 
@@ -51,14 +49,24 @@ export class OrderService {
       data: {
         customerId,
         totalAmount,
-        deliveryAddress,
-        deliveryCity,
-        deliveryPhone,
-        note,
+        address,
+        deliveryCity: "N/A",
+        deliveryPhone: "N/A",
+        note: note ?? null,
         items: { create: orderItems },
       },
       include: {
-        items: { include: { meal: { select: { name: true, image: true, provider: { select: { restaurantName: true } } } } } },
+        items: {
+          include: {
+            meal: {
+              select: {
+                title: true,
+                image: true,
+                provider: { select: { restaurantName: true } },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -78,7 +86,14 @@ export class OrderService {
         include: {
           items: {
             include: {
-              meal: { select: { name: true, image: true, price: true, provider: { select: { restaurantName: true, logo: true } } } },
+              meal: {
+                select: {
+                  title: true,
+                  image: true,
+                  price: true,
+                  provider: { select: { restaurantName: true, logo: true } },
+                },
+              },
             },
           },
         },
@@ -101,7 +116,7 @@ export class OrderService {
           include: {
             meal: {
               select: {
-                name: true,
+                title: true,
                 image: true,
                 price: true,
                 provider: { select: { id: true, restaurantName: true } },

@@ -4,7 +4,7 @@ import { authController } from "./auth.controller";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { validate } from "../../middleware/validate.middleware";
 
-const router = Router();
+const router = Router() as any;
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -12,9 +12,14 @@ const registerSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["CUSTOMER", "PROVIDER"]).default("CUSTOMER"),
   restaurantName: z.string().min(2).optional(),
+  address: z.string().min(5).optional(),
   restaurantAddress: z.string().min(5).optional(),
-  restaurantCity: z.string().min(2).optional(),
+  phone: z.string().min(7).optional(),
   restaurantPhone: z.string().min(7).optional(),
+  city: z.string().optional(),
+  restaurantCity: z.string().optional(),
+  description: z.string().optional(),
+  logo: z.string().url("Must be a valid URL").optional(),
 });
 
 const loginSchema = z.object({
@@ -29,10 +34,10 @@ const updateProfileSchema = z.object({
   image: z.string().url("Must be a valid URL").optional(),
 });
 
-router.post("/register", validate(registerSchema), (req, res) => authController.register(req, res));
-router.post("/login", validate(loginSchema), (req, res) => authController.login(req, res));
-router.post("/logout", requireAuth, (req, res) => authController.logout(req as any, res));
-router.get("/me", requireAuth, (req, res) => authController.getMe(req as any, res));
-router.patch("/me", requireAuth, validate(updateProfileSchema), (req, res) => authController.updateProfile(req as any, res));
+router.post("/register", validate(registerSchema), (req: any, res: any) => authController.register(req, res));
+router.post("/login", validate(loginSchema), (req: any, res: any) => authController.login(req, res));
+router.post("/logout", requireAuth, (req: any, res: any) => authController.logout(req as any, res));
+router.get("/me", requireAuth, (req: any, res: any) => authController.getMe(req as any, res));
+router.patch("/me", requireAuth, validate(updateProfileSchema), (req: any, res: any) => authController.updateProfile(req as any, res));
 
 export default router;

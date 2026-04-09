@@ -18,7 +18,7 @@ interface MealFilters {
 }
 
 interface MealInput {
-  name: string;
+  title: string;
   description: string;
   price: number;
   categoryId: string;
@@ -43,7 +43,7 @@ export class MealService {
     if (providerId) where.providerId = providerId;
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
+        { title: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
       ];
     }
@@ -56,7 +56,7 @@ export class MealService {
     if (isVegan === "true") where.isVegan = true;
     if (isGlutenFree === "true") where.isGlutenFree = true;
 
-    const validSortFields = ["price", "rating", "createdAt", "name"];
+    const validSortFields = ["price", "rating", "createdAt", "title"];
     const sortField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
     const sortOrder = order === "asc" ? "asc" : "desc";
 
@@ -143,7 +143,7 @@ export class MealService {
   }
 
   async create(userId: string, data: MealInput) {
-    const profile = await this._getProviderProfile(userId);
+    const profile = await this._getProviderProfile(userId, true);
 
     const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
     if (!category) throw { statusCode: 404, message: "Category not found." };
@@ -159,7 +159,7 @@ export class MealService {
   }
 
   async update(userId: string, mealId: string, data: Partial<MealInput>) {
-    const profile = await this._getProviderProfile(userId);
+    const profile = await this._getProviderProfile(userId, true);
     const meal = await prisma.meal.findUnique({ where: { id: mealId } });
 
     if (!meal) throw { statusCode: 404, message: "Meal not found." };
@@ -178,7 +178,7 @@ export class MealService {
   }
 
   async toggleAvailability(userId: string, mealId: string) {
-    const profile = await this._getProviderProfile(userId);
+    const profile = await this._getProviderProfile(userId, true);
     const meal = await prisma.meal.findUnique({ where: { id: mealId } });
 
     if (!meal) throw { statusCode: 404, message: "Meal not found." };
@@ -191,7 +191,7 @@ export class MealService {
   }
 
   async delete(userId: string, mealId: string) {
-    const profile = await this._getProviderProfile(userId);
+    const profile = await this._getProviderProfile(userId, true);
     const meal = await prisma.meal.findUnique({ where: { id: mealId } });
 
     if (!meal) throw { statusCode: 404, message: "Meal not found." };
@@ -200,9 +200,12 @@ export class MealService {
     await prisma.meal.delete({ where: { id: mealId } });
   }
 
-  private async _getProviderProfile(userId: string) {
+  private async _getProviderProfile(userId: string, requireApproved = false) {
     const profile = await prisma.providerProfile.findUnique({ where: { userId } });
     if (!profile) throw { statusCode: 404, message: "Provider profile not found. Please complete your profile." };
+    if (requireApproved && profile.status !== "APPROVED") {
+      throw { statusCode: 403, message: "Provider account must be approved before this action can be performed." };
+    }
     return profile;
   }
 }

@@ -29,7 +29,7 @@ export class AdminService {
       prisma.order.findMany({
         include: {
           customer: { select: { name: true, email: true } },
-          items: { include: { meal: { select: { name: true } } }, take: 3 },
+          items: { include: { meal: { select: { title: true } } }, take: 3 },
         },
         orderBy: { createdAt: "desc" },
         take: 10,
@@ -122,7 +122,7 @@ export class AdminService {
         orders: {
           orderBy: { createdAt: "desc" },
           take: 10,
-          include: { items: { include: { meal: { select: { name: true } } } } },
+          include: { items: { include: { meal: { select: { title: true } } } } },
         },
         _count: { select: { orders: true, reviews: true } },
       },
@@ -176,7 +176,7 @@ export class AdminService {
             include: {
               meal: {
                 select: {
-                  name: true,
+                  title: true,
                   provider: { select: { restaurantName: true } },
                 },
               },
@@ -211,6 +211,48 @@ export class AdminService {
     ]);
 
     return { providers, total, page: pageNum, limit: limitNum };
+  }
+
+  async getPendingProviders(filters: { page?: string; limit?: string }) {
+    const { page, limit } = filters;
+    const { page: pageNum, limit: limitNum, skip } = getPaginationParams(page, limit);
+
+    const where = { status: "PENDING" as const };
+    const [providers, total] = await Promise.all([
+      prisma.providerProfile.findMany({
+        where,
+        include: {
+          user: { select: { id: true, name: true, email: true, status: true, createdAt: true } },
+          _count: { select: { meals: true } },
+        },
+        orderBy: { createdAt: "asc" },
+        skip,
+        take: limitNum,
+      }),
+      prisma.providerProfile.count({ where }),
+    ]);
+
+    return { providers, total, page: pageNum, limit: limitNum };
+  }
+
+  async approveProvider(providerId: string) {
+    const profile = await prisma.providerProfile.findUnique({ where: { id: providerId } });
+    if (!profile) throw { statusCode: 404, message: "Provider not found." };
+
+    return prisma.providerProfile.update({
+      where: { id: providerId },
+      data: { status: "APPROVED", isVerified: true },
+    });
+  }
+
+  async rejectProvider(providerId: string) {
+    const profile = await prisma.providerProfile.findUnique({ where: { id: providerId } });
+    if (!profile) throw { statusCode: 404, message: "Provider not found." };
+
+    return prisma.providerProfile.update({
+      where: { id: providerId },
+      data: { status: "REJECTED", isVerified: false },
+    });
   }
 
   async toggleProviderVerification(providerId: string) {

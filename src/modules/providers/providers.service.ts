@@ -24,7 +24,7 @@ export class ProviderService {
     const { page, limit, city, search } = filters;
     const { page: pageNum, limit: limitNum, skip } = getPaginationParams(page, limit);
 
-    const where: any = {};
+    const where: any = { status: "APPROVED", user: { status: "ACTIVE" } };
     if (city) where.city = { contains: city, mode: "insensitive" };
     if (search) {
       where.OR = [
@@ -36,20 +36,9 @@ export class ProviderService {
     const [providers, total] = await Promise.all([
       prisma.providerProfile.findMany({
         where,
-        select: {
-          id: true,
-          restaurantName: true,
-          description: true,
-          logo: true,
-          banner: true,
-          cuisineTypes: true,
-          city: true,
-          address: true,
-          rating: true,
-          totalOrders: true,
-          isVerified: true,
-          user: { select: { status: true } },
-          _count: { select: { meals: true } },
+        include: {
+          user: true,
+          meals: true,
         },
         orderBy: { rating: "desc" },
         skip,
@@ -58,8 +47,7 @@ export class ProviderService {
       prisma.providerProfile.count({ where }),
     ]);
 
-    const activeProviders = providers.filter((p) => p.user.status === "ACTIVE");
-    return { providers: activeProviders, total, page: pageNum, limit: limitNum };
+    return { providers, total, page: pageNum, limit: limitNum };
   }
 
   async getById(id: string) {
@@ -77,6 +65,9 @@ export class ProviderService {
     });
 
     if (!provider) throw { statusCode: 404, message: "Provider not found." };
+    if (provider.status !== "APPROVED") {
+      throw { statusCode: 404, message: "Provider not found." };
+    }
     if (provider.user.status === "SUSPENDED") {
       throw { statusCode: 403, message: "This provider is currently unavailable." };
     }
@@ -85,15 +76,33 @@ export class ProviderService {
   }
 
   async updateProfile(userId: string, data: ProviderProfileUpdate) {
-    const profile = await prisma.providerProfile.findUnique({ where: { userId } });
-    if (!profile) throw { statusCode: 404, message: "Provider profile not found." };
+    const profile = await this._getProviderProfile(userId);
 
     return prisma.providerProfile.update({ where: { userId }, data });
   }
 
+  async getMyProfile(userId: string) {
+    return prisma.providerProfile.findUnique({ where: { userId } });
+  }
+
   async getDashboardStats(userId: string) {
-    const profile = await prisma.providerProfile.findUnique({ where: { userId } });
-    if (!profile) throw { statusCode: 404, message: "Provider profile not found." };
+    const profile = await this._getProviderProfile(userId, false);
+    if (profile.status !== "APPROVED") {
+      return {
+        profile,
+        stats: {
+          totalMeals: 0,
+          totalOrders: 0,
+          pendingOrders: 0,
+          preparingOrders: 0,
+          readyOrders: 0,
+          deliveredOrders: 0,
+          totalRevenue: 0,
+        },
+        recentOrders: [],
+        popularMeals: [],
+      };
+    }
 
     const providerMealFilter = { items: { some: { meal: { providerId: profile.id } } } };
 
@@ -112,7 +121,7 @@ export class ProviderService {
         where: providerMealFilter,
         include: {
           customer: { select: { name: true, email: true, phone: true } },
-          items: { include: { meal: { select: { name: true, price: true } } } },
+          items: { include: { meal: { select: { title: true, price: true } } } },
         },
         orderBy: { createdAt: "desc" },
         take: 5,
@@ -121,7 +130,7 @@ export class ProviderService {
         where: { providerId: profile.id },
         orderBy: { rating: "desc" },
         take: 5,
-        select: { id: true, name: true, image: true, price: true, rating: true, totalReviews: true, _count: { select: { orderItems: true } } },
+        select: { id: true, title: true, image: true, price: true, rating: true, totalReviews: true, _count: { select: { orderItems: true } } },
       }),
     ]);
 
@@ -142,8 +151,7 @@ export class ProviderService {
   }
 
   async getProviderOrders(userId: string, filters: { page?: string; limit?: string; status?: string }) {
-    const profile = await prisma.providerProfile.findUnique({ where: { userId } });
-    if (!profile) throw { statusCode: 404, message: "Provider profile not found." };
+    const profile = await this._getProviderProfile(userId, true);
 
     const { page, limit, status } = filters;
     const { page: pageNum, limit: limitNum, skip } = getPaginationParams(page, limit);
@@ -156,7 +164,7 @@ export class ProviderService {
         where,
         include: {
           customer: { select: { name: true, email: true, phone: true } },
-          items: { include: { meal: { select: { name: true, image: true, price: true } } } },
+          items: { include: { meal: { select: { title: true, image: true, price: true } } } },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -169,8 +177,7 @@ export class ProviderService {
   }
 
   async updateOrderStatus(userId: string, orderId: string, newStatus: OrderStatus) {
-    const profile = await prisma.providerProfile.findUnique({ where: { userId } });
-    if (!profile) throw { statusCode: 404, message: "Provider profile not found." };
+    const profile = await this._getProviderProfile(userId, true);
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -206,7 +213,7 @@ export class ProviderService {
         data: updateData,
         include: {
           customer: { select: { name: true, email: true } },
-          items: { include: { meal: { select: { name: true } } } },
+          items: { include: { meal: { select: { title: true } } } },
         },
       }),
       ...(newStatus === "DELIVERED"
@@ -215,6 +222,15 @@ export class ProviderService {
     ]);
 
     return updatedOrder;
+  }
+
+  private async _getProviderProfile(userId: string, requireApproved = false) {
+    const profile = await prisma.providerProfile.findUnique({ where: { userId } });
+    if (!profile) throw { statusCode: 404, message: "Provider profile not found." };
+    if (requireApproved && profile.status !== "APPROVED") {
+      throw { statusCode: 403, message: "Provider account must be approved before this action can be performed." };
+    }
+    return profile;
   }
 }
 

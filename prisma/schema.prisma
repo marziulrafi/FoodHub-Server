@@ -20,9 +20,9 @@ model ProviderProfile {
   city           String?
   phone          String
   status         ProviderStatus @default(PENDING)
-  isVerified     Boolean  @default(false)
-  rating         Float    @default(0)
-  totalOrders    Int      @default(0)
+  isVerified     Boolean        @default(false)
+  rating         Float          @default(0)
+  totalOrders    Int            @default(0)
 
   meals Meal[]
 
@@ -90,15 +90,15 @@ model Order {
   customerId String
   customer   User   @relation(fields: [customerId], references: [id])
 
-  items OrderItem[]
+  items   OrderItem[]
+  reviews Review[]
 
-  status      OrderStatus @default(PLACED)
-  totalAmount Float
-
-  address        String @map("deliveryAddress")
-  deliveryCity    String
-  deliveryPhone   String
-  note            String?
+  status        OrderStatus @default(PLACED)
+  totalAmount   Float
+  address       String      @map("deliveryAddress")
+  deliveryCity  String
+  deliveryPhone String
+  note          String?
 
   placedAt    DateTime  @default(now())
   preparingAt DateTime?
@@ -128,12 +128,15 @@ model OrderItem {
 }
 
 model Review {
-  id         String @id @default(cuid())
-  userId     String @map("customerId")
-  customer   User   @relation(fields: [userId], references: [id])
+  id       String @id @default(cuid())
+  userId   String @map("customerId")
+  customer User   @relation(fields: [userId], references: [id])
 
   mealId String
   meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   rating  Int
   comment String?
@@ -141,7 +144,7 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, mealId])
+  @@unique([orderId, mealId])
   @@map("reviews")
 }
 
@@ -195,6 +198,7 @@ model User {
   providerProfile ProviderProfile?
   orders          Order[]
   reviews         Review[]
+  images          Image[]
 
   @@unique([email])
   @@map("user")
@@ -246,4 +250,17 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Image {
+  id        String   @id @default(uuid())
+  url       String
+  publicId  String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("images")
 }

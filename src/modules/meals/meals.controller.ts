@@ -29,7 +29,8 @@ export class MealController {
 
   async getById(req: Request, res: Response): Promise<void> {
     try {
-      const meal = await mealService.getById(req.params.id);
+      const id = req.params.id as string;
+      const meal = await mealService.getById(id);
       sendSuccess(res, "Meal fetched successfully.", meal);
     } catch (err: any) {
       sendError(res, err.message || "Failed to fetch meal.", err.statusCode || 500);
@@ -62,7 +63,8 @@ export class MealController {
 
   async update(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const meal = await mealService.update(req.user!.id, req.params.id, req.body);
+      const id = req.params.id as string;
+      const meal = await mealService.update(req.user!.id, id, req.body);
       sendSuccess(res, "Meal updated successfully.", meal);
     } catch (err: any) {
       sendError(res, err.message || "Failed to update meal.", err.statusCode || 500);
@@ -71,7 +73,8 @@ export class MealController {
 
   async toggleAvailability(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const meal = await mealService.toggleAvailability(req.user!.id, req.params.id);
+      const id = req.params.id as string;
+      const meal = await mealService.toggleAvailability(req.user!.id, id);
       sendSuccess(res, `Meal is now ${meal.isAvailable ? "available" : "unavailable"}.`, meal);
     } catch (err: any) {
       sendError(res, err.message || "Failed to toggle meal.", err.statusCode || 500);
@@ -80,7 +83,8 @@ export class MealController {
 
   async delete(req: AuthRequest, res: Response): Promise<void> {
     try {
-      await mealService.delete(req.user!.id, req.params.id);
+      const id = req.params.id as string;
+      await mealService.delete(req.user!.id, id);
       sendSuccess(res, "Meal deleted successfully.");
     } catch (err: any) {
       sendError(res, err.message || "Failed to delete meal.", err.statusCode || 500);

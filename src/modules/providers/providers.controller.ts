@@ -21,7 +21,8 @@ export class ProviderController {
 
   async getById(req: Request, res: Response): Promise<void> {
     try {
-      const provider = await providerService.getById(req.params.id);
+      const id = req.params.id as string;
+      const provider = await providerService.getById(id);
       sendSuccess(res, "Provider fetched successfully.", provider);
     } catch (err: any) {
       sendError(res, err.message || "Failed to fetch provider.", err.statusCode || 500);
@@ -34,6 +35,15 @@ export class ProviderController {
       sendSuccess(res, "Provider profile updated successfully.", profile);
     } catch (err: any) {
       sendError(res, err.message || "Failed to update profile.", err.statusCode || 500);
+    }
+  }
+
+  async getMyProfile(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const profile = await providerService.getMyProfile(req.user!.id);
+      sendSuccess(res, "Provider profile fetched successfully.", profile);
+    } catch (err: any) {
+      sendError(res, err.message || "Failed to fetch provider profile.", err.statusCode || 500);
     }
   }
 
@@ -74,7 +84,8 @@ export class ProviderController {
         return;
       }
 
-      const order = await providerService.updateOrderStatus(req.user!.id, req.params.orderId, status);
+      const orderId = req.params.orderId as string;
+      const order = await providerService.updateOrderStatus(req.user!.id, orderId, status);
       sendSuccess(res, "Order status updated successfully.", order);
     } catch (err: any) {
       sendError(res, err.message || "Failed to update order status.", err.statusCode || 500);

@@ -35,3 +35,11 @@ export const getPaginationParams = (page?: string, limit?: string) => {
   const skip = (pageNum - 1) * limitNum;
   return { page: pageNum, limit: limitNum, skip };
 };
+
+export const sendResponse = <T>(
+  res: Response,
+  statusCode: number,
+  message: string,
+  data?: T,
+  meta?: ApiResponse["meta"]
+): Response => sendSuccess(res, message, data, statusCode, meta);

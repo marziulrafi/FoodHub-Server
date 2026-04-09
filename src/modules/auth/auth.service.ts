@@ -1,6 +1,7 @@
 import { auth } from "../../config/auth";
 import prisma from "../../config/prisma";
 import { Role } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 interface RegisterInput {
     name: string;
@@ -8,9 +9,14 @@ interface RegisterInput {
     password: string;
     role: Role;
     restaurantName?: string;
+    address?: string;
     restaurantAddress?: string;
-    restaurantCity?: string;
+    phone?: string;
     restaurantPhone?: string;
+    city?: string;
+    restaurantCity?: string;
+    description?: string;
+    logo?: string;
 }
 
 interface UpdateProfileInput {
@@ -28,9 +34,14 @@ export class AuthService {
             password,
             role,
             restaurantName,
+            address,
             restaurantAddress,
-            restaurantCity,
+            phone,
             restaurantPhone,
+            city,
+            restaurantCity,
+            description,
+            logo,
         } = input;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -39,16 +50,13 @@ export class AuthService {
         }
 
         if (role === "PROVIDER") {
-            if (
-                !restaurantName ||
-                !restaurantAddress ||
-                !restaurantCity ||
-                !restaurantPhone
-            ) {
+            const resolvedAddress = address ?? restaurantAddress;
+            const resolvedPhone = phone ?? restaurantPhone;
+            if (!restaurantName || !resolvedAddress || !resolvedPhone) {
                 throw {
                     statusCode: 422,
                     message:
-                        "Provider registration requires: restaurantName, restaurantAddress, restaurantCity, restaurantPhone.",
+                        "Provider registration requires: restaurantName, address, phone.",
                 };
             }
         }
@@ -61,11 +69,14 @@ export class AuthService {
             throw { statusCode: 500, message: "Registration failed. Please try again." };
         }
 
+        const passwordHash = await bcrypt.hash(password, 10);
+
         const user = await prisma.user.update({
             where: { id: authResult.user.id },
             data: {
                 role: role ?? "CUSTOMER",
                 emailVerified: true,
+                password: passwordHash,
             },
             select: {
                 id: true,
@@ -77,15 +88,25 @@ export class AuthService {
         });
 
         if (role === "PROVIDER") {
-            await prisma.providerProfile.create({
-                data: {
-                    userId: user.id,
-                    restaurantName: restaurantName!,
-                    address: restaurantAddress!,
-                    city: restaurantCity!,
-                    phone: restaurantPhone!,
-                },
-            });
+            const resolvedAddress = address ?? restaurantAddress!;
+            const resolvedPhone = phone ?? restaurantPhone!;
+            const resolvedCity = city ?? restaurantCity;
+
+            const providerProfileData: any = {
+                userId: user.id,
+                restaurantName: restaurantName!,
+                address: resolvedAddress,
+                phone: resolvedPhone,
+                cuisineTypes: [],
+                status: "PENDING",
+                isVerified: false,
+            };
+
+            if (description) providerProfileData.description = description;
+            if (logo) providerProfileData.logo = logo;
+            if (resolvedCity) providerProfileData.city = resolvedCity;
+
+            await prisma.providerProfile.create({ data: providerProfileData });
         }
 
         return user;
