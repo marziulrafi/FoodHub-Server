@@ -47,7 +47,26 @@ export class ProviderService {
       prisma.providerProfile.count({ where }),
     ]);
 
-    return { providers, total, page: pageNum, limit: limitNum };
+    // Calculate average ratings from reviews for each provider
+    const providersWithRatings = await Promise.all(
+      providers.map(async (provider) => {
+        const reviewAggregate = await prisma.review.aggregate({
+          where: { meal: { providerId: provider.id } },
+          _avg: { rating: true },
+          _count: { rating: true },
+        });
+
+        return {
+          ...provider,
+          rating: reviewAggregate._avg.rating
+            ? Math.round(reviewAggregate._avg.rating * 10) / 10
+            : 0,
+          totalReviews: reviewAggregate._count.rating,
+        };
+      })
+    );
+
+    return { providers: providersWithRatings, total, page: pageNum, limit: limitNum };
   }
 
   async getById(id: string) {

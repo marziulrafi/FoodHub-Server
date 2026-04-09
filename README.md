@@ -62,20 +62,37 @@ src/
     └── seed.ts - Admin user seed script
 ```
 
-## API Endpoints
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/auth/me`
-- `GET /api/v1/meals`
-- `POST /api/v1/meals`
-- `PATCH /api/v1/meals/:id`
-- `DELETE /api/v1/meals/:id`
-- `GET /api/v1/orders`
-- `POST /api/v1/orders`
-- `GET /api/v1/providers`
-- `GET /api/v1/categories`
-- `POST /api/v1/cloudinary/upload`
+## API Key Endpoints
+
+### Authentication
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/logout` - User logout
+- `GET /api/v1/auth/me` - Get current user
+
+### Meals
+- `GET /api/v1/meals` - Get all meals (paginated)
+- `GET /api/v1/meals/:id` - Get meal details
+- `POST /api/v1/meals` - Create meal (provider only)
+- `PATCH /api/v1/meals/:id` - Update meal (provider only)
+- `DELETE /api/v1/meals/:id` - Delete meal (provider only)
+
+### Orders
+- `GET /api/v1/orders` - Get user's orders
+- `POST /api/v1/orders` - Create new order
+- `GET /api/v1/orders/:id` - Get order details
+- `PATCH /api/v1/orders/:id` - Update order status
+
+### Providers
+- `GET /api/v1/providers` - List all providers
+- `GET /api/v1/providers/:id` - Get provider details
+
+### Categories
+- `GET /api/v1/categories` - Get all categories
+- `POST /api/v1/admin/categories` - Create category (admin only)
+
+### Image Upload
+- `POST /api/v1/cloudinary/upload` - Upload image to Cloudinary
 
 ## Deployment
 - Deployed on Vercel as the backend service
