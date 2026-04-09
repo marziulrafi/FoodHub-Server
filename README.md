@@ -2,9 +2,12 @@
 
 FoodHub Backend is the REST API server for the FoodHub platform. It provides authentication, user management, meal catalog, provider workflows, order processing, category management, admin controls, cloudinary image handling, and all backend business logic.
 
-## Live API
-- Backend base URL: `https://foodhub-server-seven.vercel.app`
-- Frontend : `https://foodhub-seven-navy.vercel.app`
+## Live Links
+🔗 [Backend API](https://foodhub-server-seven.vercel.app)
+
+🔗 [Frontend](https://foodhub-seven-navy.vercel.app)
+
+🔗 [Frontend Repository](https://github.com/marziulrafi/FoodHub)
 
 ## Features
 - Email/password authentication via `better-auth`
