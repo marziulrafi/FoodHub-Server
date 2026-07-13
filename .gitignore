@@ -5,3 +5,4 @@ dist/
 .DS_Store
 /generated/prisma
 .vercel
+api/index.mjs

@@ -11,6 +11,7 @@ import categoryRoutes from "./modules/categories/categories.routes";
 import adminRoutes from "./modules/admin/admin.routes";
 import reviewRoutes from "./modules/reviews/reviews.routes";
 import adminCategoriesRoutes from "./modules/admin/admin.categories.routes";
+import contactRoutes from "./modules/contact/contact.routes";
 import cloudinaryRoutes from "./modules/cloudinary/cloudinary.routes";
 import imagesRoutes from "./modules/images/images.routes";
 
@@ -54,6 +55,7 @@ app.use("/api/providers", providerRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/contact", contactRoutes);
 app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/images", imagesRoutes);
 
@@ -63,6 +65,7 @@ app.use("/api/v1/providers", providerRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/contact", contactRoutes);
 app.use("/api/v1/cloudinary", cloudinaryRoutes);
 app.use("/api/v1/images", imagesRoutes);
 app.use("/api/admin/categories", adminCategoriesRoutes);

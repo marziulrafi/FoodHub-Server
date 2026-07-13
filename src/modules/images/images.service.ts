@@ -27,7 +27,6 @@ export const getImagesByUserId = async (userId: string) => {
   try {
     const images = await prisma.image.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
     });
 
     return images;
